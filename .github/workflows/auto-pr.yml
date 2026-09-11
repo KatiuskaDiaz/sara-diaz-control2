@@ -2,26 +2,33 @@ name: Auto PR on MLOPS commit
 
 on:
   push:
-    branches-ignore:
-      - main
+    branches:
+      - dev
 
 jobs:
   check-and-create-pr:
     runs-on: ubuntu-latest
     if: contains(github.event.head_commit.message, 'MLOPS')
+    permissions:
+      pull-requests: write
+      contents: read
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          base: main
-          branch: ${{ github.ref_name }}
-          title: "Auto PR: ${{ github.event.head_commit.message }}"
-          body: |
-            Pull Request generado automáticamente porque el commit contenía la palabra **MLOPS**.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base main \
+            --head dev \
+            --title "Promote dev -> main (1 commit)" \
+            --body "PR automático generado por GitHub Actions.
 
-            Commit: ${{ github.sha }}
-            Mensaje: ${{ github.event.head_commit.message }}
+          - Base: \`main\`
+          - Head: \`dev\`
+          - Commits por delante: 1
+
+          Condición: presencia de la palabra exacta \`MLOPS\` en un mensaje de commit." \
+            --label auto-pr,release
